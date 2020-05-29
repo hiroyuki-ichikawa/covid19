@@ -141,7 +141,8 @@ export default Vue.extend({
         {
           icon: 'ParentIcon',
           title: this.$t('お子様をお持ちの皆様へ'),
-          link: 'https://www.pref.shizuoka.jp/kinkyu/covid-19-fam.html'
+          link:
+           'https://www.pref.shizuoka.jp/kinkyu/covid-19-fam.html'
         },
         {
           icon: 'mdi-account-multiple',
