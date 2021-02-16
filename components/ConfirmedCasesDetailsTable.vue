@@ -51,9 +51,18 @@
         </li>
         <li :class="[$style.box]">
           <div :class="$style.content">
-            <span>{{ $t('入院・療養等調整中') }}</span>
+            <span>{{ $t('自宅療養') }}</span>
             <span>
-              <strong>{{ 調査中 }}</strong>
+              <strong>{{ 自宅療養 }}</strong>
+              <span :class="$style.unit">{{ $t('人') }}</span>
+            </span>
+          </div>
+        </li>
+        <li :class="[$style.box]">
+          <div :class="$style.content">
+            <span>{{ $t('入院等調整中') }}</span>
+            <span>
+              <strong>{{ 入院等調整中 }}</strong>
               <span :class="$style.unit">{{ $t('人') }}</span>
             </span>
           </div>
@@ -111,7 +120,11 @@ export default Vue.extend({
       type: Number,
       required: true
     },
-    調査中: {
+    自宅療養: {
+      type: Number,
+      required: true
+    },
+    入院等調整中: {
       type: Number,
       required: true
     },
