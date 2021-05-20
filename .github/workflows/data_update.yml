@@ -1,0 +1,102 @@
+
+name: datajson update
+
+on:
+  workflow_dispatch:
+  schedule:
+  # 毎日20時に実行:GitHub ActionsはUTCなので、JST(UTC-9)の11時に実行
+    - cron:  '0 11 * * *'
+env:
+  MAIN_BRANCH: master
+  DEVELOPMENT_BRANCH: development
+jobs:
+  data_generate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          repository: hrsano645/covid19-gen-datajson-shizuokapref
+          ref: master
+          fetch-depth: 0
+          token: ${{ secrets.DATA_UPDATE_PAT }}
+          persist-credentials: false
+      - name: Cache dependencies
+        uses: actions/cache@v2
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-
+      - name: Set up Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: 3.9
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install flake8 pytest
+          if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+      - name: Generate jsonfiles
+        run: |
+          bash bat.sh
+          mkdir data_dist
+          cp *.json data_dist/
+      - name: Upload jsonfiles
+        uses: actions/upload-artifact@v1
+        with:
+          name: datajson
+          path: data_dist
+  data_upload_development:
+    needs: data_generate
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          ref: ${{ env.DEVELOPMENT_BRANCH }}
+          fetch-depth: 0
+          token: ${{ secrets.DATA_UPDATE_PAT }}
+          persist-credentials: false
+      - name: Download data
+        uses: actions/download-artifact@v1
+        with:
+          name: datajson
+      - name: Commit files
+        run: |
+          cp -rp datajson/* data/
+          rm -rf datajson
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+          git add data/*
+          git commit -m "Auto Update Data"
+      - name: Push changes
+        uses: ad-m/github-push-action@master
+        with:
+          github_token: ${{ secrets.DATA_UPDATE_PAT }}
+          branch: ${{ env.DEVELOPMENT_BRANCH }}
+  data_upload_deploy:
+    needs: data_generate
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          ref: ${{ env.MAIN_BRANCH }}
+          fetch-depth: 0
+          token: ${{ secrets.DATA_UPDATE_PAT }}
+          persist-credentials: false
+      - name: Download data
+        uses: actions/download-artifact@v1
+        with:
+          name: datajson
+      - name: Commit files
+        run: |
+          cp -rp datajson/* data/
+          rm -rf datajson
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+          git add data/*
+          git commit -m "Auto Update Data"
+      - name: Push changes
+        uses: ad-m/github-push-action@master
+        with:
+          github_token: ${{ secrets.DATA_UPDATE_PAT }}
+          branch: ${{ env.MAIN_BRANCH }}
